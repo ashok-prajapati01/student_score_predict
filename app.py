@@ -2,147 +2,167 @@ import streamlit as st
 import joblib
 import numpy as np
 
-# -----------------------------
+# ----------------------------
 # Page Configuration
-# -----------------------------
+# ----------------------------
 st.set_page_config(
-    page_title="Student Score Prediction",
+    page_title="Student Performance Predictor",
     page_icon="🎓",
     layout="wide"
 )
 
-# -----------------------------
-# Load Model
-# -----------------------------
-@st.cache_resource
-def load_model():
-    return joblib.load("model.pkl")
-
-model = load_model()
-
-# -----------------------------
+# ----------------------------
 # Custom CSS
-# -----------------------------
+# ----------------------------
 st.markdown("""
 <style>
 
-.stApp{
-    background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+.main {
+    background-color: #f7f9fc;
 }
 
-.main-title{
-    text-align:center;
-    color:white;
+.title{
     font-size:42px;
     font-weight:bold;
+    text-align:center;
+    color:white;
 }
 
 .subtitle{
-    text-align:center;
-    color:#dddddd;
     font-size:18px;
-    margin-bottom:30px;
+    text-align:center;
+    color:white;
 }
 
-.card{
-    background:rgba(255,255,255,0.12);
-    padding:25px;
-    border-radius:20px;
-    box-shadow:0px 8px 25px rgba(0,0,0,0.4);
-    margin-bottom:20px;
+.header{
+    background:linear-gradient(90deg,#4F46E5,#06B6D4);
+    padding:30px;
+    border-radius:15px;
+    margin-bottom:25px;
 }
 
 .result{
-    background:linear-gradient(90deg,#00c6ff,#0072ff);
-    color:white;
-    padding:20px;
+    background:#ffffff;
+    padding:25px;
     border-radius:15px;
-    text-align:center;
-    font-size:28px;
-    font-weight:bold;
-    box-shadow:0px 5px 20px rgba(0,114,255,0.5);
+    box-shadow:0px 5px 15px rgba(0,0,0,0.1);
 }
 
 .stButton>button{
     width:100%;
-    background:#0072ff;
+    background:#4F46E5;
     color:white;
-    border:none;
     border-radius:10px;
-    padding:12px;
+    height:50px;
     font-size:18px;
     font-weight:bold;
 }
 
 .stButton>button:hover{
-    background:#0056d6;
+    background:#4338CA;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
-# -----------------------------
+# ----------------------------
+# Load Model
+# ----------------------------
+model = joblib.load("model.pkl")
+
+# ----------------------------
 # Header
-# -----------------------------
-st.markdown('<h1 class="main-title">🎓 Student Score Prediction</h1>', unsafe_allow_html=True)
-st.markdown('<p class="subtitle">Predict student scores using Machine Learning</p>', unsafe_allow_html=True)
+# ----------------------------
+st.markdown("""
+<div class="header">
+<div class="title">🎓 Student Performance Predictor</div>
+<div class="subtitle">
+Predict Student Score using Machine Learning
+</div>
+</div>
+""", unsafe_allow_html=True)
 
-left, right = st.columns([2,1])
+col1, col2 = st.columns([1,1])
 
-with left:
+with col1:
 
-    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.subheader("📥 Enter Student Details")
 
-    st.subheader("Input Features")
-
-    col1,col2=st.columns(2)
-
-    with col1:
-        f1=st.number_input("Feature 1",value=0.0)
-        f2=st.number_input("Feature 2",value=0.0)
-
-    with col2:
-        f3=st.number_input("Feature 3",value=0.0)
-        f4=st.number_input("Feature 4",value=0.0)
-
-    predict=st.button("Predict Score")
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-with right:
-
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-
-    st.subheader("Instructions")
-
-    st.write("""
-    • Enter all four feature values.
-
-    • Click **Predict Score**.
-
-    • The predicted score will appear below.
-    """)
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-# -----------------------------
-# Prediction
-# -----------------------------
-if predict:
-
-    data=np.array([[f1,f2,f3,f4]])
-
-    prediction=model.predict(data)
-
-    st.markdown(
-        f"""
-        <div class="result">
-        Predicted Score<br><br>
-        {prediction[0]:.2f}
-        </div>
-        """,
-        unsafe_allow_html=True
+    hours = st.slider(
+        "Hours Studied",
+        0.0,
+        12.0,
+        5.0,
+        0.5
     )
 
-st.markdown("<br>", unsafe_allow_html=True)
-st.caption("Made with ❤️ using Streamlit")
+    sleep = st.slider(
+        "Sleep Hours",
+        0.0,
+        12.0,
+        7.0,
+        0.5
+    )
+
+    attendance = st.slider(
+        "Attendance (%)",
+        0,
+        100,
+        80
+    )
+
+    previous = st.slider(
+        "Previous Score",
+        0,
+        100,
+        70
+    )
+
+    st.markdown("### 📊 Input Summary")
+
+    st.progress(hours / 12)
+    st.write(f"Hours Studied: **{hours} hrs**")
+
+    st.progress(sleep / 12)
+    st.write(f"Sleep Hours: **{sleep} hrs**")
+
+    st.progress(attendance / 100)
+    st.write(f"Attendance: **{attendance}%**")
+
+    st.progress(previous / 100)
+    st.write(f"Previous Score: **{previous}**")
+
+with col2:
+
+    st.subheader("🤖 Prediction")
+
+    if st.button("Predict Performance"):
+
+        features = np.array([[hours, sleep, attendance, previous]])
+
+        prediction = model.predict(features)[0]
+
+        st.markdown(
+            f"""
+            <div class="result">
+            <h2 style="color:#4F46E5;">Predicted Score</h2>
+            <h1>{prediction:.2f}</h1>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        if prediction >= 85:
+            st.success("🌟 Excellent Performance!")
+
+        elif prediction >= 70:
+            st.info("👍 Good Performance!")
+
+        elif prediction >= 50:
+            st.warning("📚 Average Performance. More practice recommended.")
+
+        else:
+            st.error("⚠ Needs Improvement.")
+
+st.markdown("---")
+st.caption("Made with ❤️ using Streamlit & Scikit-learn")
