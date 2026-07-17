@@ -1,136 +1,148 @@
 import streamlit as st
-import pickle
+import joblib
 import numpy as np
-import pandas as pd
 
-# 1. Page & Layout Configuration
+# -----------------------------
+# Page Configuration
+# -----------------------------
 st.set_page_config(
-    page_title="Academic Performance Analytics",
+    page_title="Student Score Prediction",
     page_icon="🎓",
     layout="wide"
 )
 
-# Custom Color CSS Injection (Deep Slate, Mint Accent, Crimson & Soft Gray)
-st.markdown("""
-    <style>
-        .main {
-            background-color: #f8f9fa;
-        }
-        div[data-testid="stMetricValue"] {
-            font-size: 40px;
-            color: #1e3a8a;
-            font-weight: 700;
-        }
-        .stButton>button {
-            background-color: #10b981 !important;
-            color: white !important;
-            border-radius: 8px;
-            border: none;
-            height: 3em;
-            font-size: 16px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        .stButton>button:hover {
-            background-color: #059669 !important;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-            transform: translateY(-1px);
-        }
-    </style>
-""", unsafe_allowed_html=True)
-
-# 2. Safe Model Loader
+# -----------------------------
+# Load Model
+# -----------------------------
 @st.cache_resource
-def load_performance_model():
-    with open("model.pkl", "rb") as f:
-        return pickle.load(f)
+def load_model():
+    return joblib.load("model.pkl")
 
-try:
-    model = load_performance_model()
-except Exception as e:
-    st.error(f"Failed to load the prediction engine (model.pkl): {e}")
-    st.stop()
+model = load_model()
 
-# 3. Header Segment
-st.title("🎓 Student Performance Prediction Dashboard")
-st.markdown("Assess final outcomes dynamically by adjusting lifestyle metrics and historic academic standings below.")
-st.write("---")
+# -----------------------------
+# Custom CSS
+# -----------------------------
+st.markdown("""
+<style>
 
-# 4. Multi-Column Layout Architecture
-col1, col2 = st.columns([4, 3], gap="large")
+.stApp{
+    background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+}
 
-with col1:
-    st.subheader("📊 Input Behavior & Academic Metrics")
-    
-    # Grid positioning for standardizing inputs
-    sub_col1, sub_col2 = st.columns(2)
-    
-    with sub_col1:
-        hours_studied = st.number_input(
-            "Daily Study Hours", 
-            min_value=0.0, max_value=24.0, value=6.0, step=0.5,
-            help="Average total hours focused purely on learning per day."
-        )
-        attendance_percent = st.slider(
-            "Class Attendance (%)", 
-            min_value=0.0, max_value=100.0, value=85.0, step=1.0,
-            help="Overall attendance track record."
-        )
+.main-title{
+    text-align:center;
+    color:white;
+    font-size:42px;
+    font-weight:bold;
+}
 
-    with sub_col2:
-        sleep_hours = st.number_input(
-            "Nightly Sleep Hours", 
-            min_value=0.0, max_value=24.0, value=7.5, step=0.5,
-            help="Average daily rest cycle duration."
-        )
-        previous_scores = st.number_input(
-            "Previous Exam Score (out of 100)", 
-            min_value=0.0, max_value=100.0, value=75.0, step=1.0,
-            help="Grade baseline achieved in the last primary examination."
-        )
+.subtitle{
+    text-align:center;
+    color:#dddddd;
+    font-size:18px;
+    margin-bottom:30px;
+}
 
-with col2:
-    st.subheader("🔮 Predictive Analytics Outcome")
-    st.write("Click below to run the K-Nearest Neighbors evaluation pipeline.")
-    
-    # Construct precise DataFrame structure matching model expectancies
-    features_df = pd.DataFrame([{
-        'hours_studied': hours_studied,
-        'sleep_hours': sleep_hours,
-        'attendance_percent': attendance_percent,
-        'previous_scores': previous_scores
-    }])
-    
-    predict_clicked = st.button("Evaluate Performance Profile", use_container_width=True)
-    
-    if predict_clicked:
-        with st.spinner("Calculating metric weights..."):
-            try:
-                # Compute predictions
-                predicted_score = model.predict(features_df)[0]
-                score_delta = predicted_score - previous_scores
-                
-                # Render results nicely
-                st.write("") 
-                st.metric(
-                    label="Estimated Final Score Target", 
-                    value=f"{predicted_score:.2f} / 100",
-                    delta=f"{score_delta:+.2f} shift vs historic baseline"
-                )
-                
-                # Contextual evaluation callouts
-                if predicted_score >= 85:
-                    st.success("🌟 **High Performance Profile:** Parameters show excellent habits and top-tier predictability.")
-                elif predicted_score >= 60:
-                    st.info("👍 **Stable Profile:** Student is securely on track. Small gains in attendance or focus hours could push this profile higher.")
-                else:
-                    st.warning("⚠️ **At-Risk Target Alert:** Strategic adjustments to sleep patterns or study regimens are highly recommended.")
-                    
-            except Exception as error:
-                st.error(f"Pipeline Execution Error: {error}")
-    else:
-        st.info("Awaiting structural inputs. Adjust variables on the left pane and run the assessment.")
+.card{
+    background:rgba(255,255,255,0.12);
+    padding:25px;
+    border-radius:20px;
+    box-shadow:0px 8px 25px rgba(0,0,0,0.4);
+    margin-bottom:20px;
+}
 
-# 5. Dashboard Footer
-st.write("---")
-st.caption("Engineered Framework: scikit-learn 1.6.1 | Web Interface Core: Streamlit Wide Layout")
+.result{
+    background:linear-gradient(90deg,#00c6ff,#0072ff);
+    color:white;
+    padding:20px;
+    border-radius:15px;
+    text-align:center;
+    font-size:28px;
+    font-weight:bold;
+    box-shadow:0px 5px 20px rgba(0,114,255,0.5);
+}
+
+.stButton>button{
+    width:100%;
+    background:#0072ff;
+    color:white;
+    border:none;
+    border-radius:10px;
+    padding:12px;
+    font-size:18px;
+    font-weight:bold;
+}
+
+.stButton>button:hover{
+    background:#0056d6;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+# -----------------------------
+# Header
+# -----------------------------
+st.markdown('<h1 class="main-title">🎓 Student Score Prediction</h1>', unsafe_allow_html=True)
+st.markdown('<p class="subtitle">Predict student scores using Machine Learning</p>', unsafe_allow_html=True)
+
+left, right = st.columns([2,1])
+
+with left:
+
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+
+    st.subheader("Input Features")
+
+    col1,col2=st.columns(2)
+
+    with col1:
+        f1=st.number_input("Feature 1",value=0.0)
+        f2=st.number_input("Feature 2",value=0.0)
+
+    with col2:
+        f3=st.number_input("Feature 3",value=0.0)
+        f4=st.number_input("Feature 4",value=0.0)
+
+    predict=st.button("Predict Score")
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+with right:
+
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+
+    st.subheader("Instructions")
+
+    st.write("""
+    • Enter all four feature values.
+
+    • Click **Predict Score**.
+
+    • The predicted score will appear below.
+    """)
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# -----------------------------
+# Prediction
+# -----------------------------
+if predict:
+
+    data=np.array([[f1,f2,f3,f4]])
+
+    prediction=model.predict(data)
+
+    st.markdown(
+        f"""
+        <div class="result">
+        Predicted Score<br><br>
+        {prediction[0]:.2f}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+st.markdown("<br>", unsafe_allow_html=True)
+st.caption("Made with ❤️ using Streamlit")
